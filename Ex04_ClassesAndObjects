@@ -54,7 +54,10 @@ namespace SampleConApp
 
         public List<Machine> GetAllRegisteredDevices()
         {
-           return _laptops;
+            var slno= MyConsole.GetString("Enter the serial number of your laptop");
+            var make= MyConsole.GetString("Enter the make of your laptop");
+            var model= MyConsole.GetString("Enter the model of your laptop");
+            var price= MyConsole.GetString("Enter the price of your laptop");
         }
     }
 
@@ -88,18 +91,19 @@ namespace SampleConApp
                     return false;
             }
         }
-        private static void RegisterNewDevice(){
-            var slno= MyConsole.GetString("Enter the serial number of your laptop");
-            var make= MyConsole.GetString("Enter the make of your laptop");
-            var model= MyConsole.GetString("Enter the model of your laptop");
-            var price= MyConsole.GetString("Enter the price of your laptop");
+        private static void RegisterNewDevice()
+        {
+            _laptops.Add(mac);
         }
         
-        private static void UpdateDeviceDetails(){
+        private static void UpdateDeviceDetails()
+        {
             
         }
-        private static void GetAllRegisteredDevices(){
-            
+        private static void GetAllRegisteredDevices()
+        {
+            Console.WriteLine("The list is");
+            return _laptops;
         }
     }
    
