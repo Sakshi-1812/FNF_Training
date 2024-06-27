@@ -1,0 +1,65 @@
+using System;
+namespace SampleConApp
+{
+    class Arithematic
+    {
+        public double First { get; set;}
+        public double Second { get; set;}
+        public string Operation { get; set;}
+        
+        public double PerformOperation()
+        {
+            switch(Operation)
+                {
+                    case "+":
+                        return (First + Second);
+                
+                    case "-":
+                        return (First - Second);
+                        
+                    case "x":
+                        return (First * Second);
+                        
+                    case "/":
+                        return (First / Second);
+                        break;
+                    default: 
+                        throw new Exception("Invalid Choice");
+                        
+                }
+        }
+    }
+    class Ex06ProgramingConcepts
+    {
+        static double PerformOperation(double first, double second, string operation)
+        {
+            Arithematic math= new Arithematic();
+            math.First=first;
+            math.Second=second;
+            math.Operation=operation;
+            return math.PerformOperation();
+        }
+        static void Main(string[] args)
+        {
+            string stopSignal="";
+            System.Console.WriteLine("Welcome to windows calculator");
+            do
+            {
+                var first = MyConsole.GetDouble("Enter the first number");                
+                var operation = MyConsole.GetString("Enter the choice of operation as +,-, x, or /");                
+                var second = MyConsole.GetDouble("Enter the second number");
+                
+                try
+                {
+                    double result=PerformOperation(first, second, operation);
+                    System.Console.WriteLine("The result of this operation is " + result);
+                    stopSignal= MyConsole.GetString("Do you want to continue the operations? If yes press Y, and if no press N");
+                }
+                catch (Exception ex)
+                {
+                    System.Console.WriteLine(ex.Message);
+                }   
+            }while(stopSignal.ToUpper()=="Y");
+        }
+    }
+}
