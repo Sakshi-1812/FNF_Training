@@ -1,0 +1,126 @@
+/*
+Financial calc.
+the app shd calc the emi for a given principal amt with certain rate of interest and term, ( the term shd be minimal of 3 years for car, 10 years for home loan)
+the app shd also have calc for calculating rd amt and provide the final amt after the rd(recurring deposit) is complete
+*/
+
+//The mathematical formula to calculate EMI is: 
+//EMI = P * r * (1 + r)n/ ((1 + r)n - 1) 
+//where P= Loan amount, r= interest rate, n=tenure in number of months.
+
+//The mathematical formula to calculate RD amount is:
+//RD Amount = P * ((1 + r/12)^n - 1) / (r/12)
+//where P = Monthly RD amount, r = Annual interest rate, n = Number of months
+
+using System;
+using System.Collections.Generic;
+
+namespace SampleConApp
+{
+    class EmiCalc
+    {
+        public double PrincipalAmt { get; set; }
+        public double RateofInt { get; set; }
+        public double Term { get; set; }
+        public string Emi { get; set; }
+
+        public double EMICalculator()
+        {
+            double monthlyInterestRate = RateofInt / 1200; // Convert annual interest rate to monthly
+            double numOfMonths = Term * 12; // Convert term in years to months
+
+            switch (Emi)
+            {
+                case "car":
+                    if (Term < 3)
+                        throw new Exception("Minimum term for car loan is 3 years.");
+                    return (PrincipalAmt * monthlyInterestRate * Math.Pow(1 + monthlyInterestRate, numOfMonths)) / (Math.Pow(1 + monthlyInterestRate, numOfMonths) - 1);
+
+                case "home":
+                    if (Term < 10)
+                        throw new Exception("Minimum term for home loan is 10 years.");
+                    return (PrincipalAmt * monthlyInterestRate * Math.Pow(1 + monthlyInterestRate, numOfMonths)) / (Math.Pow(1 + monthlyInterestRate, numOfMonths) - 1);
+
+                default:
+                    throw new Exception("Invalid choice");
+            }
+        }
+
+        public double RDCalculator(double rdAmount, double rdInterestRate, double rdTerm)
+        {
+            double monthlyInterestRate = rdInterestRate / 1200; // Convert annual interest rate to monthly
+            double numOfMonths = rdTerm * 12; // Convert term in years to months
+
+            return rdAmount * ((Math.Pow(1 + monthlyInterestRate, numOfMonths) - 1) / monthlyInterestRate);
+        }
+    }
+
+    class Ex07FinancialCalc
+    {
+        static double EMICalculator(double princiAmt, double rateOfInterest, double term, string emi)
+        {
+            EmiCalc loan = new EmiCalc();
+            loan.PrincipalAmt = princiAmt;
+            loan.RateofInt = rateOfInterest;
+            loan.Term = term;
+            loan.Emi = emi;
+            return loan.EMICalculator();
+        }
+
+        static double RDCalculator(double rdAmount, double rdInterestRate, double rdTerm)
+        {
+            EmiCalc rd = new EmiCalc();
+            return rd.RDCalculator(rdAmount, rdInterestRate, rdTerm);
+        }
+
+        static void Main(string[] args)
+        {
+            string stopSignal = "";
+            System.Console.WriteLine("Welcome to EMI and RD Calculator");
+            do
+            {
+                var choice = MyConsole.GetString("Enter 'EMI' to calculate EMI or 'RD' to calculate RD: ");
+
+                if (choice.ToUpper() == "EMI")
+                {
+                    var emi = MyConsole.GetString("Enter the type of loan you want to calculate EMI for: car or home");
+                    var princiAmt = MyConsole.GetDouble("Enter the principal amount of your loan");
+                    var rateOfInterest = MyConsole.GetDouble("Enter the rate of interest of your loan (in percentage)");
+                    var term = MyConsole.GetDouble("Enter the tenure in the term of years of your loan");
+
+                    try
+                    {
+                        double result = EMICalculator(princiAmt, rateOfInterest, term, emi);
+                        System.Console.WriteLine("The EMI of your {0} loan is {1:C2} per month", emi, result);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine(ex.Message);
+                    }
+                }
+                else if (choice.ToUpper() == "RD")
+                {
+                    var rdAmount = MyConsole.GetDouble("Enter the monthly RD amount");
+                    var rdInterestRate = MyConsole.GetDouble("Enter the annual interest rate of the RD (in percentage)");
+                    var rdTerm = MyConsole.GetDouble("Enter the tenure in the term of years of the RD");
+
+                    try
+                    {
+                        double result = RDCalculator(rdAmount, rdInterestRate, rdTerm);
+                        System.Console.WriteLine("The final amount after the RD is completed is {0:C2}", result);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine(ex.Message);
+                    }
+                }
+                else
+                {
+                    System.Console.WriteLine("Invalid choice. Please try again.");
+                }
+
+                stopSignal = MyConsole.GetString("Do you want to continue the operations? If yes press Y, and if no press N");
+            } while (stopSignal.ToUpper() == "Y");
+        }
+    }
+}
