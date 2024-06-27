@@ -1,0 +1,120 @@
+using System;
+using System.Collections.Generic;
+
+namespace SampleConApp
+{
+    class Machine
+    {
+        public string SlNo { get; set;}
+
+        public string Make { get; set;}
+
+        public string Model { get; set;}
+
+        public int Price { get; set;}
+        
+    }
+
+    class MachineDatabase
+    {
+        private List<Machine> _laptops=new List<Machine>();
+
+        public void RegisterNewDevice(Machine mac)
+        {
+            for (int i=0;i<_laptops.Count;i++)
+            {
+                if(_laptops[i]==null)
+                {
+                    _laptops[i]=new Machine
+                    {
+                        SlNo= mac.SlNo,
+                        Make=mac.Make,
+                        Model=mac.Model,
+                        Price=mac.Price
+                    };
+                    return;
+                }
+            }
+        }
+
+        public void UpdateDeviceDetails(string slno, Machine mac)
+        {
+            for (int i=0;i<_laptops.Count;i++)
+            {
+                if(_laptops[i]!=null && _laptops[i].SlNo==slno)
+                {
+                    _laptops[i].Make=mac.Make;
+                    _laptops[i].Model=mac.Model;
+                    _laptops[i].Price=mac.Price;
+                    return;
+                }
+            }
+        }
+    
+
+        public List<Machine> GetAllRegisteredDevices()
+        {
+           return _laptops;
+        }
+    }
+
+    class Ex04ClassesAndObjects
+    {
+        static void Main(string[] args)
+        {
+            System.Console.WriteLine("\n ****************************MENU************************\n 1. PRESS 'R' TO REGISTER DEVICES \n 2. PRESS 'A' TO REGISTER NEW DEVICE \n 3. PRESS 'U' TO UPDATE ANY DEVICE \n PS : ANY OTHER KEY IS CONSIDERED AS EXIT \n *************************************** \n");
+            bool processing = false;
+            do
+            {
+                string choice = Console.ReadLine();
+                processing = MachineMenu(choice);
+            } while (processing);
+        } 
+            
+        public static bool MachineMenu(string choice)
+        {
+            switch (choice)
+            {
+                case "R":
+                    GetAllRegisteredDevices();
+                    return true;
+                case "A":
+                    RegisterNewDevice();
+                    return true;
+                case "U":
+                    UpdateDeviceDetails();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        private static void RegisterNewDevice(){
+            var slno= MyConsole.GetString("Enter the serial number of your laptop");
+            var make= MyConsole.GetString("Enter the make of your laptop");
+            var model= MyConsole.GetString("Enter the model of your laptop");
+            var price= MyConsole.GetString("Enter the price of your laptop");
+        }
+        
+        private static void UpdateDeviceDetails(){
+            
+        }
+        private static void GetAllRegisteredDevices(){
+            
+        }
+    }
+   
+            //System.Console.WriteLine("Enter the serial number of your laptop");
+            //var slno = Console.ReadLine();
+            //System.Console.WriteLine("Enter the make of your laptop");
+            //var make = Console.ReadLine();
+            //System.Console.WriteLine("Enter the model of your laptop");
+            //var model = Console.ReadLine();
+            //System.Console.WriteLine("Enter the price of your laptop");
+            //var price = Console.ReadLine();
+            //Machine machine = new Machine{SlNo=slno, Make=make, Model=model, Price=Int32.Parse(price)};
+            /*Price=Int32.Parse(price) you do this to remove this error : error CS0029: Cannot implicitly convert type
+            'string' to 'int'*/
+            //System.Console.WriteLine("The machine is {0} of serial number {1}, making of {2} and costs {3}", model, slno, make, price);
+}
+
+    
