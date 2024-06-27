@@ -1,0 +1,84 @@
+using System;
+using System.Collections.Generic;
+
+namespace SampleConApp
+{
+    class Expense
+    {
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public double Amount { get; set; }
+        public DateTime Date { get; set; }
+
+        public void DisplayExpense()
+        {
+            Console.WriteLine($"ID: {Id}, Description: {Description}, Amount: {Amount}, Date: {Date.ToShortDateString()}");
+        }
+    }
+
+    class ExpenseCollection
+    {
+        private List<Expense> expenses;
+
+        public ExpenseCollection()
+        {
+            expenses = new List<Expense>();
+        }
+
+        public void Add(Expense expense)
+        {
+            expenses.Add(expense);
+        }
+
+        public void Remove(Expense expense)
+        {
+            expenses.Remove(expense);
+        }
+
+        public void Update(Expense oldExpense, Expense newExpense)
+        {
+            int index = expenses.IndexOf(oldExpense);
+            if (index != -1)
+            {
+                expenses[index] = newExpense;
+            }
+        }
+
+        public Expense Find(int id)
+        {
+            return expenses.Find(e => e.Id == id);
+        }
+
+        public void DisplayAll()
+        {
+            foreach (var expense in expenses)
+            {
+                expense.DisplayExpense();
+            }
+        }
+    }
+
+    class Ex08_CrudExample
+    {
+        static void Main(string[] args)
+        {
+            int id = MyConsole.GetInteger("Enter the ID of the expense");
+            string description = MyConsole.GetString("Enter the description of the expense");
+            double amount = MyConsole.GetDouble("Enter the amount of the expense");
+            DateTime date = MyConsole.GetDate("Enter the date of the expense (MM/dd/yyyy)");
+
+            Expense expense = new Expense
+            {
+                Id = id,
+                Description = description,
+                Amount = amount,
+                Date = date
+            };
+
+            ExpenseCollection expenseCollection = new ExpenseCollection();
+            expenseCollection.Add(expense);
+
+            expenseCollection.DisplayAll();
+        }
+    }
+}
