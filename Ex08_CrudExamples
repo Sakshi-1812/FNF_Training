@@ -1,0 +1,167 @@
+using System;
+using System.Collections.Generic;
+
+namespace SampleConApp
+{
+    class Expense
+    {
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public double Amount { get; set; }
+        public DateTime Date { get; set; }
+
+        public void DisplayExpense()
+        {
+            Console.WriteLine($"ID: {Id}, Description: {Description}, Amount: {Amount}, Date: {Date.ToShortDateString()}");
+        }
+    }
+
+    class ExpenseCollection
+    {
+        private List<Expense> expenses;
+
+        public ExpenseCollection()
+        {
+            expenses = new List<Expense>();
+        }
+
+        public void Add(Expense expense)
+        {
+            expenses.Add(expense);
+        }
+
+        public void Remove(Expense expense)
+        {
+            expenses.Remove(expense);
+        }
+
+        public void Update(Expense oldExpense, Expense newExpense)
+        {
+            int index = expenses.IndexOf(oldExpense);
+            if (index != -1)
+            {
+                expenses[index] = newExpense;
+            }
+        }
+
+        public Expense Find(int id)
+        {
+            return expenses.Find(e => e.Id == id);
+        }
+
+        public void DisplayAll()
+        {
+            foreach (var expense in expenses)
+            {
+                expense.DisplayExpense();
+            }
+        }
+    }
+
+    class Ex08_CrudExample
+    {
+        static void Main(string[] args)
+        {
+            ExpenseCollection expenseCollection = new ExpenseCollection();
+
+            while (true)
+            {
+                Console.WriteLine("\nChoose an operation:");
+                Console.WriteLine("1. Add Expense");
+                Console.WriteLine("2. Remove Expense");
+                Console.WriteLine("3. Update Expense");
+                Console.WriteLine("4. Find Expense");
+                Console.WriteLine("5. Display All Expenses");
+                Console.WriteLine("6. Exit");
+
+                int choice = MyConsole.GetInteger("Enter your choice (1-6): ");
+
+                switch (choice)
+                {
+                    case 1:
+                        int id = MyConsole.GetInteger("Enter the ID of the expense");
+                        string description = MyConsole.GetString("Enter the description of the expense");
+                        double amount = MyConsole.GetDouble("Enter the amount of the expense");
+                        DateTime date = MyConsole.GetDate("Enter the date of the expense (MM/dd/yyyy)");
+
+                        Expense newExpense = new Expense
+                        {
+                            Id = id,
+                            Description = description,
+                            Amount = amount,
+                            Date = date
+                        };
+
+                        expenseCollection.Add(newExpense);
+                        Console.WriteLine("Expense added successfully.");
+                        break;
+
+                    case 2:
+                        int idToRemove = MyConsole.GetInteger("Enter the ID of the expense to remove");
+                        Expense expenseToRemove = expenseCollection.Find(idToRemove);
+                        if (expenseToRemove != null)
+                        {
+                            expenseCollection.Remove(expenseToRemove);
+                            Console.WriteLine("Expense removed successfully.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Expense not found.");
+                        }
+                        break;
+
+                    case 3:
+                        int idToUpdate = MyConsole.GetInteger("Enter the ID of the expense to update");
+                        Expense expenseToUpdate = expenseCollection.Find(idToUpdate);
+                        if (expenseToUpdate != null)
+                        {
+                            string newDescription = MyConsole.GetString("Enter the new description");
+                            double newAmount = MyConsole.GetDouble("Enter the new amount");
+                            DateTime newDate = MyConsole.GetDate("Enter the new date (MM/dd/yyyy)");
+
+                            Expense updatedExpense = new Expense
+                            {
+                                Id = idToUpdate,
+                                Description = newDescription,
+                                Amount = newAmount,
+                                Date = newDate
+                            };
+
+                            expenseCollection.Update(expenseToUpdate, updatedExpense);
+                            Console.WriteLine("Expense updated successfully.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Expense not found.");
+                        }
+                        break;
+
+                    case 4:
+                        int idToFind = MyConsole.GetInteger("Enter the ID of the expense to find");
+                        Expense foundExpense = expenseCollection.Find(idToFind);
+                        if (foundExpense != null)
+                        {
+                            foundExpense.DisplayExpense();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Expense not found.");
+                        }
+                        break;
+
+                    case 5:
+                        expenseCollection.DisplayAll();
+                        break;
+
+                    case 6:
+                        Console.WriteLine("Exiting...");
+                        return;
+
+                    default:
+                        Console.WriteLine("Invalid choice. Please try again.");
+                        break;
+                }
+            }
+        }
+    }
+}
