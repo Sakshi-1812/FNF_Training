@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Generic;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.Write("Enter a string: ");
+        string input = Console.ReadLine();
+
+        string encodedString = EncodeString(input);
+        Console.WriteLine("Encoded string: " + encodedString);
+    }
+
+    static string EncodeString(string input)
+    {
+        string sentence = "The quick and brown fox jumps over the Lazy Dog";
+        string[] words = sentence.Split(' ');
+
+        Dictionary<char, string> charCodeMap = new Dictionary<char, string>();
+
+        for (int i = 0; i < words.Length; i++)
+        {
+            for (int j = 0; j < words[i].Length; j++)
+            {
+                char c = words[i][j];
+                if (!charCodeMap.ContainsKey(c))
+                {
+                    charCodeMap[c] = (i + 1).ToString() + (j + 1).ToString();
+                }
+            }
+        }
+
+        string[] inputWords = input.Split(' ');
+        string[] encodedWords = new string[inputWords.Length];
+
+        for (int i = 0; i < inputWords.Length; i++)
+        {
+            string word = inputWords[i];
+            string encodedWord = "";
+            for (int j = 0; j < word.Length; j++)
+            {
+                char c = word[j];
+                if (charCodeMap.ContainsKey(char.ToLower(c)))
+                {
+                    encodedWord += charCodeMap[char.ToLower(c)] + ",";
+                }
+                else
+                {
+                    encodedWord += c;
+                }
+            }
+            encodedWords[i] = encodedWord.TrimEnd(',');
+        }
+
+        string finalEncodedString = string.Join("-", encodedWords);
+        return finalEncodedString;
+    }
+}
