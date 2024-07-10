@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.Write("Enter a text string: ");
+        string input = Console.ReadLine();
+
+        // Split the input string into words
+        string[] words = input.Split(new[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // Create a dictionary to store word frequencies
+        Dictionary<string, int> wordFrequency = new Dictionary<string, int>();
+
+        // Count the frequency of each word
+        foreach (string word in words)
+        {
+            if (wordFrequency.ContainsKey(word))
+            {
+                wordFrequency[word]++;
+            }
+            else
+            {
+                wordFrequency[word] = 1;
+            }
+        }
+
+        // Sort the dictionary by frequency in descending order, and then by word in reverse alphabetical order
+        var sortedWords = wordFrequency.OrderByDescending(x => x.Value).ThenByDescending(x => x.Key);
+
+        // Print the word frequencies
+        foreach (var pair in sortedWords)
+        {
+            Console.WriteLine($"{pair.Value} {pair.Key}");
+        }
+    }
+}
