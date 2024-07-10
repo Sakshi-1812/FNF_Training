@@ -1,0 +1,35 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConsoleApp1
+{
+    class Hackathon2_2
+    {
+        static void Main(string[] args)
+        {
+            //Console.Write("Enter the book name followed by author name: ");
+            List<string> bookList = new List<string>();
+            bookList.Add("The Canterbury Tales by Chaucer");
+            bookList.Add("Algorithms by Sedgewick");
+            bookList.Add("The C Programming Language by Kernighan and Ritchie");
+            foreach (string book in bookList)
+            {
+                string[] bookTitle;
+                string[] books = book.Split("by");
+                for (int i = 0; i < books.Length; i++)
+                {
+                    if (i%2 == 0)
+                    {
+                        //bookTitle = books[i];
+                    }
+                    //Console.WriteLine(books[i]);
+                }
+
+            }
+
+        }
+    }
+}
