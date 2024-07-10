@@ -33,3 +33,51 @@ namespace ConsoleApp1
         }
     }
 }
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ConsoleApp1
+{
+    class Hackathon2_2
+    {
+        static void Main(string[] args)
+        {
+            List<string> bookList = new List<string>();
+            bookList.Add("The Canterbury Tales by Chaucer");
+            bookList.Add("Algorithms by Sedgewick");
+            bookList.Add("The C Programming Language by Kernighan and Ritchie");
+
+            List<string> bookTitles = new List<string>();
+            List<string> bookAuthors = new List<string>();
+
+            foreach (string book in bookList)
+            {
+                string[] bookInfo = book.Split(" by ");
+                bookTitles.Add(bookInfo[0]);
+                bookAuthors.Add(bookInfo[1]);
+            }
+
+            // Sort the book titles based on alphabetical order of their book authors
+            // If two books have the same author, use the book title for sorting
+            var sortedBooks = bookTitles.Zip(bookAuthors, (title, author) => new { Title = title, Author = author })
+                                        .OrderBy(b => b.Author)
+                                        .ThenBy(b => b.Title);
+
+            Console.WriteLine("Books sorted by author and title:");
+            foreach (var book in sortedBooks)
+            {
+                Console.WriteLine($"{book.Title} by {book.Author}");
+            }
+        }
+    }
+}
