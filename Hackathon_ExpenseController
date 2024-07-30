@@ -1,0 +1,53 @@
+using Hackathon4.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Hackathon4.Controllers
+{
+    public class ExpenseController : Controller
+    {
+        private readonly ExpenseDbContext _Context;
+        public ExpenseController(ExpenseDbContext context)
+        {
+            _Context = context;
+        }
+        public JsonResult AllExpenses()
+        {
+            var expensesList = _Context.Expenses.ToList();
+            return Json(expensesList);
+        }
+        public JsonResult FindByDetails(string title)
+        {
+            var detail = _Context.Expenses.Where(d => d.Details.Contains(title)).ToList();
+            if (detail == null)
+            {
+                throw new Exception("An Expense with the respective Detail not found");
+            }
+            return Json(detail);
+        }
+        public JsonResult FindByDate(DateTime date)
+        {
+            var foundRec = _Context.Expenses.Where(d => d.BillDate == date).ToList();
+            if (foundRec == null)
+            {
+                throw new Exception("Bill Date not found");
+            }
+            return Json(foundRec);
+        }
+        public JsonResult FindByMonth(int month)
+        {
+            var foundRec = _Context.Expenses.Where(m => m.BillDate.Month == month).ToList();
+            if(foundRec == null)
+            {
+                throw new Exception("Month not found");
+            }
+            return Json(foundRec);
+        }
+        [HttpPost]
+        public string AddExpense(Expense expense)
+        {
+            _Context.Expenses.Add(expense);
+            _Context.SaveChanges();
+            return "Expense Added Successfully";
+        }
+    }
+}
