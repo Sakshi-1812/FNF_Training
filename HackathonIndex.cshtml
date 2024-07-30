@@ -14,11 +14,11 @@
 
         function createRow(expense) {
             const row = `<tr>
-                                            <td>${expense.serialNo}</td>
-                                            <td>${expense.amount}</td>
-                                            <td>${expense.details}</td>
-                                            <td>${expense.billDate}</td>
-                                        </tr>`
+                              <td>${expense.serialNo}</td>
+                              <td>${expense.amount}</td>
+                              <td>${expense.details}</td>
+                              <td>${expense.billDate}</td>
+                         </tr>`
             return row
         }
 
@@ -40,10 +40,16 @@
             const findUrl = `Expense/FindByDetails?title=${title}`
             $.get(findUrl, onGetRecords)
         }
-        
+
         function findByDate() {
             const date = $("#txtSearchByDate").val()
             const findUrl = `Expense/FindByDate?date=${date}`
+            $.get(findUrl, onGetRecords)
+        }
+
+        function findByMonth() {
+            const month = $("#txtSearchByMonth").val()
+            const findUrl = `Expense/FindByMonth?month=${month}`
             $.get(findUrl, onGetRecords)
         }
 
@@ -66,6 +72,12 @@
             $("#btnFindByMonth").click(findByMonth)
         }
         $(document).ready(init)
+        // $(document).ready(function () {
+        //     $("#divAdd").fadeOut(2000)
+        //     $("section:eq(0)").fadeIn(2000)
+        //     displayRecords()
+        // });
+
     </script>
 </head>
 <body>
@@ -83,6 +95,7 @@
             <div class="col-md-11">
                 <input type="search" id="txtSearchByDetails" placeholder="Search by Details" class="form-control" onchange="findByDetails()" />
                 <input type="search" id="txtSearchByDate" placeholder="Search by BillDate" class="form-control" onchange="findByDate()" />
+                <input type="search" id="txtSearchByMonth" placeholder="Search by Month" class="form-control" onchange="findByMonth()" />
                 <table class="table table-bordered table-striped bg-gradient">
                     <thead>
                         <tr>
