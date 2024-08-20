@@ -1,0 +1,355 @@
+To implement two-step authentication using JWT (JSON Web Tokens) in your question bank software application with C# and .NET Core, follow the steps below. This will involve modifying the authentication mechanism to use JWT tokens instead of ASP.NET Core Identity’s default cookie-based authentication.
+
+## Project Setup
+
+1. **Create a new ASP.NET Core Web Application** project in Visual Studio.
+2. **Select the "Web Application (Model-View-Controller)" template**.
+3. **In the "Configure your new ASP.NET Core Web Application" dialog**:
+   - Select "Individual User Accounts" for authentication.
+   - Uncheck "Configure for HTTPS".
+   - Click "Create".
+
+## Required NuGet Packages
+
+You will need the following NuGet packages:
+
+1. **Microsoft.AspNetCore.Authentication.JwtBearer**
+2. **System.IdentityModel.Tokens.Jwt**
+
+You can install them using the Package Manager Console:
+
+```bash
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package System.IdentityModel.Tokens.Jwt
+```
+
+## Configure JWT Authentication
+
+1. **Open the `Startup.cs` file** and make the following changes:
+
+### 1. Configure JWT Authentication
+
+In the `ConfigureServices` method, add JWT authentication:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+    
+    // Configure Identity
+    services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+    // Add JWT Authentication
+    var key = Encoding.ASCII.GetBytes("Your_Secret_Key_Here"); // Use a secure key
+    services.AddAuthentication(x =>
+    {
+        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(x =>
+    {
+        x.RequireHttpsMetadata = false; // Set to true in production
+        x.SaveToken = true;
+        x.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+    services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+    });
+}
+```
+
+### 2. Enable CORS
+
+In the `Configure` method, add:
+
+```csharp
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+    app.UseRouting();
+
+    app.UseCors("AllowAll"); // Enable CORS
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+    });
+}
+```
+
+## Create the JWT Token
+
+1. **Create a new service class called `TokenService`** to handle JWT token generation:
+
+```csharp
+public class TokenService
+{
+    private readonly IConfiguration _config;
+
+    public TokenService(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    public string GenerateToken(ApplicationUser user)
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Issuer"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(30),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+```
+
+2. **Register the `TokenService` in `Startup.cs`**:
+
+```csharp
+services.AddScoped<TokenService>();
+```
+
+## Update Account Controller
+
+1. **Create a new controller called `AuthController`** for handling authentication:
+
+```csharp
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly TokenService _tokenService;
+    private readonly IEmailSender _emailSender;
+
+    public AuthController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        TokenService tokenService,
+        IEmailSender emailSender)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _tokenService = tokenService;
+        _emailSender = emailSender;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var user = new ApplicationUser { UserName = model.Email, Email = model.Email, TwoFactorEnabled = true };
+        var result = await _userManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            // Send email verification token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Your token: {token}");
+            return Ok(new { Message = "User registered successfully. Please verify your email." });
+        }
+
+        return BadRequest(result.Errors);
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+            return Unauthorized();
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+        if (!result.Succeeded)
+            return Unauthorized();
+
+        // Generate and return JWT token
+        var token = _tokenService.GenerateToken(user);
+        return Ok(new { Token = token });
+    }
+
+    [HttpPost("verify")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+            return NotFound();
+
+        var result = await _userManager.VerifyUserTokenAsync(user, "Default", "EmailConfirmation", model.Token);
+        if (result)
+        {
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { Message = "Email verified successfully." });
+        }
+
+        return BadRequest("Invalid token.");
+    }
+}
+```
+
+## Create View Models
+
+1. **Create a new folder called `ViewModels`** and add the following classes:
+
+### RegisterViewModel
+
+```csharp
+public class RegisterViewModel
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+
+    [Required]
+    [DataType(DataType.Password)]
+    public string Password { get; set; }
+}
+```
+
+### LoginViewModel
+
+```csharp
+public class LoginViewModel
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+
+    [Required]
+    [DataType(DataType.Password)]
+    public string Password { get; set; }
+}
+```
+
+### VerifyEmailViewModel
+
+```csharp
+public class VerifyEmailViewModel
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+
+    [Required]
+    public string Token { get; set; }
+}
+```
+
+## Configure Email Sending
+
+1. **Add email sending configuration in `appsettings.json`**:
+
+```json
+"Jwt": {
+    "Key": "Your_Secret_Key_Here",
+    "Issuer": "YourIssuer"
+},
+"Smtp": {
+    "Host": "smtp.your-email-provider.com",
+    "Port": 587,
+    "Username": "your-email@example.com",
+    "Password": "your-email-password"
+}
+```
+
+2. **Create an `EmailSender` class to handle email sending**:
+
+```csharp
+public class EmailSender : IEmailSender
+{
+    private readonly SmtpClient _smtpClient;
+
+    public EmailSender(IConfiguration configuration)
+    {
+        _smtpClient = new SmtpClient
+        {
+            Host = configuration["Smtp:Host"],
+            Port = int.Parse(configuration["Smtp:Port"]),
+            Credentials = new NetworkCredential(configuration["Smtp:Username"], configuration["Smtp:Password"]),
+            EnableSsl = true
+        };
+    }
+
+    public async Task SendEmailAsync(string email, string subject, string message)
+    {
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress("your-email@example.com"),
+            Subject = subject,
+            Body = message,
+            IsBodyHtml = true,
+        };
+        mailMessage.To.Add(email);
+        await _smtpClient.SendMailAsync(mailMessage);
+    }
+}
+```
+
+3. **Register the `EmailSender` in `Startup.cs`**:
+
+```csharp
+services.AddTransient<IEmailSender, EmailSender>();
+```
+
+## Conclusion
+
+By following these steps and integrating the provided code snippets into your ASP.NET Core question bank software application, you can implement two-step authentication using JWT tokens for verifying emails during sign-up and sign-in. This approach enhances security by allowing users to authenticate using a token rather than cookies.
+
+### Summary of Key Components
+
+- **JWT Token Generation**: Handled by the `TokenService` class.
+- **User Registration and Login**: Managed through the `AuthController`.
+- **Email Verification**: Users receive a verification token via email upon registration.
+- **Email Sending**: Managed by the `EmailSender` class.
+
+Make sure to customize the email content, styling, and any other application-specific details to fit your project's requirements. Additionally, ensure that you handle error cases gracefully and provide clear feedback to users throughout the authentication process.
