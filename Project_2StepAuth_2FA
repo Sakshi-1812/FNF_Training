@@ -19,6 +19,116 @@ services.AddIdentity<ApplicationUser, IdentityRole>()
        .AddDefaultTokenProviders();
 ```
 
+For the above snippet refer below:
+In an ASP.NET Core application that uses Identity, the `ApplicationDbContext` class is typically generated when you scaffold Identity during project creation. However, if you don't see it, you may need to create it manually. Below, I will guide you through creating the `ApplicationDbContext` class and updating the `Startup.cs` file to enable two-factor authentication correctly.
+
+## Step 1: Create the ApplicationDbContext Class
+
+1. **Create a new folder** called `Data` in your project.
+2. **Add a new class** named `ApplicationDbContext.cs` in the `Data` folder.
+
+Here is how your `ApplicationDbContext` class should look:
+
+```csharp
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace YourNamespace.Data
+{
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        // You can add additional DbSets for your application here
+        // public DbSet<YourEntity> YourEntities { get; set; }
+    }
+}
+```
+
+Replace `YourNamespace` with the actual namespace of your project.
+
+## Step 2: Update Startup.cs
+
+Now that you have created the `ApplicationDbContext`, you need to update the `Startup.cs` file to configure the services correctly.
+
+1. **Open the `Startup.cs` file**.
+2. **Locate the `ConfigureServices` method** and ensure you have the following using directives at the top of the file:
+
+```csharp
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using YourNamespace.Data; // Make sure to include your Data namespace
+```
+
+3. **Update the `ConfigureServices` method** to include the necessary services for Identity and Entity Framework Core:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    // Configure Entity Framework with SQL Server (or another provider)
+    services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+    // Configure Identity services
+    services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        // Password settings
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequiredUniqueChars = 1;
+
+        // Lockout settings
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+
+        // User settings
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>() // Use your ApplicationDbContext
+    .AddDefaultTokenProviders();
+
+    // Add other services
+    services.AddControllersWithViews();
+    services.AddRazorPages();
+    // Add Email Sender service if needed
+}
+```
+
+### Step 3: Configure Connection String
+
+1. **Open `appsettings.json`** and add your connection string:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=YourDatabaseName;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  // Other settings...
+}
+```
+
+Replace `YourDatabaseName` with the name you want for your database.
+
+### Step 4: Migrate the Database
+
+1. Open the **Package Manager Console** in Visual Studio.
+2. Run the following commands to create the database and apply the migrations:
+
+```bash
+Add-Migration InitialCreate
+Update-Database
+```
+
+
+
+
 2. **In the `ApplicationUser` class** (located in `Models/ApplicationUser.cs`), add a property to track if 2FA is enabled:
 
 ```csharp
