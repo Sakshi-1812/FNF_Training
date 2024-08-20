@@ -1,0 +1,142 @@
+To achieve the flow you described—where clicking the register button redirects the user to a verification page, then to a "verify email sent" page, and finally to a confirmation page—you'll need to modify your registration logic and create the necessary views and action methods. Below is a step-by-step guide to implement this flow in your ASP.NET Core application.
+
+### Step 1: Update the Registration Logic
+
+1. **Modify the `Register` Action Method** in the `AccountController` to redirect to the "Verify Email Sent" page after sending the confirmation email.
+
+Here’s how the updated `Register` method should look:
+
+```csharp
+[HttpPost]
+[AllowAnonymous]
+public async Task<IActionResult> Register(RegisterViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        var user = new ApplicationUser { UserName = model.Email, Email = model.Email, EmailConfirmed = false };
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (result.Succeeded)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, token }, Request.Scheme);
+            await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Please confirm your account by clicking this link: <a href='{confirmationLink}'>link</a>");
+            
+            // Redirect to the Verify Email Sent page
+            return RedirectToAction(nameof(VerifyEmailSent));
+        }
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+    }
+    return View(model);
+}
+```
+
+### Step 2: Create the Verify Email Sent Action and View
+
+1. **Add the `VerifyEmailSent` Action Method** in the `AccountController`:
+
+```csharp
+public IActionResult VerifyEmailSent()
+{
+    return View();
+}
+```
+
+2. **Create the View for `VerifyEmailSent`** in `Views/Account/VerifyEmailSent.cshtml`:
+
+```html
+@{
+    ViewData["Title"] = "Email Verification Sent";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>Please check your email for a confirmation link.</p>
+<p>After confirming your email, you can log in.</p>
+```
+
+### Step 3: Create the Confirm Email Action
+
+1. **Ensure you have the `ConfirmEmail` Action Method** in the `AccountController`:
+
+```csharp
+public async Task<IActionResult> ConfirmEmail(string userId, string token)
+{
+    if (userId == null || token == null)
+    {
+        return RedirectToAction(nameof(HomeController.Index), "Home");
+    }
+
+    var user = await _userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        throw new ApplicationException($"Unable to load user with ID '{userId}'.");
+    }
+
+    var result = await _userManager.ConfirmEmailAsync(user, token);
+    if (result.Succeeded)
+    {
+        user.EmailConfirmed = true;
+        await _userManager.UpdateAsync(user);
+        return View("ConfirmEmail"); // Redirect to the confirmation view
+    }
+    return View("Error"); // Handle errors
+}
+```
+
+### Step 4: Create the Confirm Email View
+
+1. **Create the View for `ConfirmEmail`** in `Views/Account/ConfirmEmail.cshtml`:
+
+```html
+@{
+    ViewData["Title"] = "Email Confirmation";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>Your email has been confirmed successfully! You can now log in.</p>
+```
+
+### Step 5: Update the Login Action
+
+1. **Ensure the Login Action Method** in the `AccountController` checks if the email is confirmed before allowing login:
+
+```csharp
+[HttpPost]
+[AllowAnonymous]
+public async Task<IActionResult> Login(LoginViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user != null)
+        {
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                if (!await _userManager.IsEmailConfirmedAsync(user))
+                {
+                    ModelState.AddModelError(string.Empty, "Email is unconfirmed, please confirm it first.");
+                    return View(model);
+                }
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+            }
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+        }
+    }
+    return View(model);
+}
+```
+
+### Step 6: Testing the Flow
+
+1. **Run the Application**: Start your application and navigate to the registration page.
+2. **Register a New User**: Fill in the registration form and click the register button.
+3. **Check Your Email**: After clicking the register button, you should be redirected to the "Verify Email Sent" page. Check your email for the confirmation link.
+4. **Confirm Your Email**: Click the confirmation link in your email, which should redirect you to the "Confirm Email" page.
+5. **Log In**: After confirming your email, you should be able to log in successfully.
+
+### Conclusion
+
+With these modifications, your application now follows the desired flow: after registration, the user is informed to check their email, and upon confirming their email, they are notified of the successful confirmation. This enhances user experience and ensures that users are aware of the email verification process. If you have any further questions or need additional assistance, feel free to ask!
