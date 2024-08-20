@@ -1,0 +1,54 @@
+To obtain your SendGrid API key, follow these steps:
+
+### Step-by-Step Guide to Generate a SendGrid API Key
+
+1. **Create a SendGrid Account**:
+   - If you don’t already have a SendGrid account, go to [SendGrid's website](https://sendgrid.com/) and sign up for a free account.
+
+2. **Log into Your SendGrid Account**:
+   - After creating your account, log in to your SendGrid dashboard.
+
+3. **Navigate to API Keys**:
+   - From the left-hand menu, click on **Settings**.
+   - Then select **API Keys**.
+
+4. **Create a New API Key**:
+   - Click on the **Create API Key** button located at the top right of the page.
+
+5. **Configure Your API Key**:
+   - **Name Your API Key**: Enter a name for your API key (e.g., "MyApp Email Sender").
+   - **Set Permissions**: Choose the appropriate permissions. For sending emails, you will typically want to select **Full Access** or at least ensure that the key has access to **Mail Send**.
+
+6. **Create and View Your API Key**:
+   - Click on the **Create & View** button.
+   - Your new API key will be generated and displayed. **IMPORTANT**: This is the only time you will see the full API key. Make sure to copy it and store it securely, as SendGrid will not show it to you again.
+
+7. **Use the API Key**:
+   - Once you have copied the API key, you can paste it into your `appsettings.json` file under the `SendGrid` section as follows:
+
+```json
+{
+  "SendGrid": {
+    "ApiKey": "YOUR_SENDGRID_API_KEY" // Replace with the actual API key you copied
+  },
+  // Other settings...
+}
+```
+
+### Important Notes
+
+- **API Key Security**: Treat your API key like a password. Do not expose it in public repositories or client-side code.
+- **Key Permissions**: If you select restricted access, ensure that the key has the necessary permissions for the actions you intend to perform (e.g., sending emails).
+- **Revoking Keys**: If you suspect that your API key has been compromised, you can revoke it from the SendGrid dashboard and create a new one.
+
+By following these steps, you will successfully generate and retrieve your SendGrid API key, allowing you to integrate email sending capabilities into your application using the provided `EmailSender` class.
+
+Citations:
+[1] https://stackoverflow.com/questions/42030912/how-to-get-the-full-sendgrid-api-key
+[2] https://docs.gravityforms.com/sendgrid-api-key/
+[3] https://help.debounce.io/kb/integrations/getting-a-sendgrid-api-key/
+[4] https://help.systeme.io/article/134-how-to-generate-api-key-from-sendgrid
+[5] https://www.twilio.com/docs/sendgrid/api-reference/api-keys/retrieve-an-existing-api-key
+[6] https://www.boberdoo.com/changing-sendgrid-api-key
+[7] https://learn.microsoft.com/en-us/aspnet/core/security/authentication/accconfirm?tabs=visual-studio&view=aspnetcore-6.0
+[8] https://preezie.com/docs/creating-a-sendgrid-api-key
