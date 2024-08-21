@@ -1,0 +1,170 @@
+Yes, the model classes in the `Models` folder should have all the fields corresponding to the tables in your database. Here's how the model classes should look based on your database schema:
+
+**User.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class User
+    {
+        public int UserId { get; set; }
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+        [Required]
+        public string PasswordHash { get; set; }
+        [Required]
+        public string Role { get; set; }
+        public bool TwoFactorEnabled { get; set; }
+        public bool AdminPermission { get; set; }
+        public string TwoFactorSecretKey { get; set; }
+        public DateTime? TwoFactorExpiryTime { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+```
+
+**Question.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class Question
+    {
+        public int QuestionId { get; set; }
+        [Required]
+        public string Subject { get; set; }
+        [Required]
+        public string Topic { get; set; }
+        [Required]
+        public string DifficultyLevel { get; set; }
+        [Required]
+        public string QuestionText { get; set; }
+        [Required]
+        public string OptionA { get; set; }
+        public string OptionAImagePath { get; set; }
+        [Required]
+        public string OptionB { get; set; }
+        public string OptionBImagePath { get; set; }
+        [Required]
+        public string OptionC { get; set; }
+        public string OptionCImagePath { get; set; }
+        [Required]
+        public string OptionD { get; set; }
+        public string OptionDImagePath { get; set; }
+        [Required]
+        public string CorrectAnswer { get; set; }
+        public int CreatedBy { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+```
+
+**Test.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class Test
+    {
+        public int TestId { get; set; }
+        [Required]
+        public string TestName { get; set; }
+        public int TestMaxMarks { get; set; }
+        public int TestNoOfQuestions { get; set; }
+        public int CreatedBy { get; set; }
+        public DateTime ExpiryTime { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+```
+
+**TestPaper.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class TestPaper
+    {
+        public int TestPaperId { get; set; }
+        public int TestId { get; set; }
+        public int QuestionId { get; set; }
+    }
+}
+```
+
+**TestTrainee.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class TestTrainee
+    {
+        public int TestTraineeId { get; set; }
+        public int TestId { get; set; }
+        public int TraineeId { get; set; }
+        public string Status { get; set; }
+        public decimal? Score { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
+```
+
+**Result.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class Result
+    {
+        public int ResultId { get; set; }
+        public int TestId { get; set; }
+        public int TraineeId { get; set; }
+        [Required]
+        public decimal Score { get; set; }
+        [Required]
+        public decimal Percentage { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
+```
+
+**PracticePaper.cs**:
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ProjectWebApp.Models
+{
+    public class PracticePaper
+    {
+        public int PaperId { get; set; }
+        [Required]
+        public string PaperName { get; set; }
+        [Required]
+        public string Subject { get; set; }
+        public int CreatedBy { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+```
+
+These model classes match the fields defined in your database schema. Make sure to adjust the data types and validation attributes as needed to fit your specific requirements.
