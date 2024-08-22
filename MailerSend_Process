@@ -1,0 +1,125 @@
+If you have `MailerSendOptions` and `MailerSendService` classes instead of a direct `MailerSend` class, it means the MailerSend SDK you are using has a slightly different implementation. Let's go through how you can use these classes to send emails in your ASP.NET Core application.
+
+### Step 1: Create MailerSendOptions
+
+Create a class named `MailerSendOptions` to hold the configuration options for the MailerSend service:
+
+```csharp
+public class MailerSendOptions
+{
+    public string ApiKey { get; set; }
+}
+```
+
+### Step 2: Create MailerSendService
+
+Create a class named `MailerSendService` that will handle the email sending logic using the MailerSend SDK:
+
+```csharp
+using MailerSend.Helpers.Builder;
+using MailerSend.Library;
+using Microsoft.Extensions.Options;
+using System.Threading.Tasks;
+
+public class MailerSendService
+{
+    private readonly MailerSendOptions _options;
+
+    public MailerSendService(IOptions<MailerSendOptions> options)
+    {
+        _options = options.Value;
+    }
+
+    public async Task SendEmailAsync(string recipientEmail, string subject, string htmlContent)
+    {
+        var emails = new Emails(new Auth(_options.ApiKey));
+
+        var emailParams = new EmailParams()
+            .SetFrom("your-email@example.com") // Replace with your verified sender email
+            .SetFromName("Your Name")
+            .AddRecipient(recipientEmail)
+            .SetSubject(subject)
+            .SetHtml(htmlContent)
+            .SetText("This is a plain text version of the email.");
+
+        var response = await emails.Send(emailParams);
+
+        if (!response.IsSuccess)
+        {
+            // Handle error (log it, throw an exception, etc.)
+            throw new Exception("Failed to send email: " + response.Error.Message);
+        }
+    }
+}
+```
+
+### Step 3: Configure MailerSendOptions in Startup.cs
+
+In your `Startup.cs` file, configure the `MailerSendOptions` with your API key:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+
+    // Configure MailerSendOptions
+    services.Configure<MailerSendOptions>(options =>
+    {
+        options.ApiKey = "YOUR_API_KEY"; // Replace with your MailerSend API key
+    });
+
+    // Register MailerSendService
+    services.AddTransient<MailerSendService>();
+
+    services.AddSwaggerGen();
+}
+```
+
+### Step 4: Use MailerSendService to Send Emails
+
+In your controller or service, you can now use the `MailerSendService` to send emails:
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+
+[Route("api/[controller]")]
+[ApiController]
+public class TestController : ControllerBase
+{
+    private readonly MailerSendService _mailerSendService;
+
+    public TestController(MailerSendService mailerSendService)
+    {
+        _mailerSendService = mailerSendService;
+    }
+
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> CompleteTest(int id, TestTrainee testTrainee)
+    {
+        // Logic to complete the test and calculate score...
+
+        // Prepare the email message
+        string subject = "Test Results";
+        string message = $"Your test score is {testTrainee.Score} ({testTrainee.Percentage}%).";
+
+        // Send the email with test results
+        await _mailerSendService.SendEmailAsync("trainee@example.com", subject, message);
+
+        return NoContent();
+    }
+}
+```
+
+### Step 5: Test the Application
+
+1. **Run the application** and ensure that the API is working.
+2. **Complete a test** using the API, and check the trainee's email for the test results.
+
+### Conclusion
+
+By using the `MailerSendOptions` and `MailerSendService` classes, you can still send emails using the MailerSend SDK in your ASP.NET Core application. The main differences are:
+
+1. **`MailerSendOptions`**: Used to store the API key configuration.
+2. **`MailerSendService`**: Handles the email sending logic using the MailerSend SDK.
+
+Make sure to replace `"YOUR_API_KEY"` with your actual MailerSend API key and `"trainee@example.com"` with the trainee's email address. Also, handle any errors that may occur during the email sending process. If you have any further questions or need assistance, feel free to ask!
