@@ -1,0 +1,107 @@
+To implement functionality that disables the questions and displays a message ("The test got over") after the expiry time of the test, you can modify the HTML and JavaScript in your generated question paper. The JavaScript will check the current time against the expiry time and update the page accordingly.
+
+### Step-by-Step Implementation
+
+Here’s how you can modify the `GenerateQuestionPaper` method in the `QuestionPaperGenerator` class to achieve this functionality:
+
+#### Step 1: Update the GenerateQuestionPaper Method
+
+Modify the `GenerateQuestionPaper` method to include logic that disables the questions and displays a message when the test time has expired.
+
+```csharp
+using System;
+using System.IO;
+
+public class QuestionPaperGenerator
+{
+    public string GenerateQuestionPaper(string[] questions, DateTime startTime, DateTime expiryTime, TimeSpan hyperlinkDuration)
+    {
+        // Create HTML content for the question paper with a countdown timer
+        string expirationTime = DateTime.Now.Add(hyperlinkDuration).ToString("yyyy-MM-ddTHH:mm:ss");
+        string htmlContent = $@"
+        <html>
+        <head>
+            <title>Question Paper</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                #timer {{ position: absolute; top: 10px; right: 10px; font-size: 20px; color: red; }}
+                .disabled {{ color: gray; pointer-events: none; }}
+            </style>
+            <script>
+                var countdownDate = new Date('{expirationTime}').getTime();
+                var x = setInterval(function() {{
+                    var now = new Date().getTime();
+                    var distance = countdownDate - now;
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    document.getElementById('timer').innerHTML = hours + 'h ' + minutes + 'm ' + seconds + 's ';
+                    
+                    if (distance < 0) {{
+                        clearInterval(x);
+                        document.getElementById('timer').innerHTML = 'EXPIRED';
+                        document.getElementById('questions').classList.add('disabled');
+                        document.getElementById('message').innerHTML = 'The test got over';
+                    }}
+                }}, 1000);
+            </script>
+        </head>
+        <body>
+            <h1>Welcome to the generated question paper</h1>
+            <div id='timer'></div>
+            <p>Test Start Time: {startTime}</p>
+            <p>Test Expiry Time: {expiryTime}</p>
+            <div id='questions'>
+                <ol>";
+
+        foreach (var question in questions)
+        {
+            htmlContent += $"<li>{question}</li>";
+        }
+        
+        htmlContent += "</ol></div>";
+        htmlContent += "<div id='message'></div></body></html>";
+
+        // Save the HTML to a file
+        string fileName = $"QuestionPaper_{Guid.NewGuid()}.html";
+        File.WriteAllText(fileName, htmlContent);
+
+        // Generate a unique URL (for demonstration, using a local path)
+        string uniqueUrl = $"http://yourserver.com/{fileName}";
+
+        // Store expiration logic (this would typically involve a database)
+        StoreLinkExpiration(uniqueUrl, DateTime.Now.Add(hyperlinkDuration));
+
+        return uniqueUrl;
+    }
+
+    private void StoreLinkExpiration(string url, DateTime expirationTime)
+    {
+        // Logic to store the URL and its expiration time in a database or cache
+        Console.WriteLine($"Stored URL: {url} with expiration time: {expirationTime}");
+    }
+}
+```
+
+### Explanation of Changes
+
+1. **JavaScript Countdown**:
+   - The JavaScript countdown checks the current time against the expiration time. When the countdown reaches zero, it clears the interval and updates the timer display to indicate that the time has expired.
+
+2. **Disabling Questions**:
+   - When the time expires, the `questions` div is given the class `disabled`, which is styled to make the text gray and disable pointer events (preventing any interaction).
+   - A message "The test got over" is displayed in the `message` div.
+
+3. **HTML Structure**:
+   - The questions are wrapped in a `div` with the ID `questions`, and a `div` with the ID `message` is added to display the expiration message.
+
+### Step 2: Test the Implementation
+
+1. **Compile and run your application**.
+2. **Generate a question paper** using the modified code.
+3. **Open the generated HTML file** in a web browser.
+4. **Observe the countdown timer** and check that the questions become disabled and the message appears when the time expires.
+
+### Conclusion
+
+This implementation allows you to display a countdown timer on the question paper and automatically disable the questions while showing a message when the test time expires. If you have any further questions or need additional modifications, feel free to ask!
