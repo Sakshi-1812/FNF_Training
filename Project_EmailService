@@ -1,0 +1,181 @@
+To send test results to trainees' emails using MailerSend after they finish a test, follow these detailed steps. This guide will cover the entire process, including setting up the MailerSend API, creating the necessary methods in your ASP.NET Core Web API, and sending the email.
+
+### Step 1: Set Up MailerSend Account and Get API Key
+
+1. **Create a MailerSend Account**:
+   - Go to [MailerSend](https://www.mailersend.com/) and sign up for a free account.
+
+2. **Generate an API Key**:
+   - Log in to your MailerSend account.
+   - Navigate to the **API** section.
+   - Click on **Create API Key** and name it (e.g., "Test Results API Key").
+   - Copy the generated API key; you will use it in your application.
+
+### Step 2: Install MailerSend SDK
+
+1. **Install the MailerSend SDK**:
+   - Open your ASP.NET Core Web API project.
+   - Run the following command in the Package Manager Console to install the MailerSend SDK:
+   ```bash
+   dotnet add package MailerSend
+   ```
+
+### Step 3: Create Email Sending Logic
+
+1. **Create an Email Service**:
+   - Create a folder named `Services` in your project and add a class named `EmailService.cs`:
+
+```csharp
+using MailerSend;
+using MailerSend.Helpers.Builder;
+using System.Threading.Tasks;
+
+namespace ProjectWebApp.Services
+{
+    public class EmailService
+    {
+        private readonly string _apiKey;
+
+        public EmailService(string apiKey)
+        {
+            _apiKey = apiKey;
+        }
+
+        public async Task SendTestResultsEmail(string recipientEmail, string subject, string message)
+        {
+            var mailerSend = new MailerSend(_apiKey);
+
+            var emailParams = new EmailParams()
+                .SetFrom("your-email@example.com") // Replace with your verified sender email
+                .SetFromName("Your Name")
+                .AddRecipient(recipientEmail)
+                .SetSubject(subject)
+                .SetHtml(message)
+                .SetText("This is a plain text version of the email.");
+
+            var response = await mailerSend.Email.Send(emailParams);
+
+            if (!response.IsSuccess)
+            {
+                // Handle error (log it, throw an exception, etc.)
+            }
+        }
+    }
+}
+```
+
+### Step 4: Update the Test Completion Logic
+
+1. **Modify the `CompleteTest` Method in Your Controller**:
+   - In your `TestController` (or wherever you handle test completion), update the method to send an email with the results:
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using ProjectWebApp.Data;
+using ProjectWebApp.Models;
+using ProjectWebApp.Services;
+using System.Threading.Tasks;
+
+namespace ProjectWebApp.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class TestController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly EmailService _emailService;
+
+        public TestController(ApplicationDbContext context, EmailService emailService)
+        {
+            _context = context;
+            _emailService = emailService;
+        }
+
+        [HttpPost("{id}/complete")]
+        public async Task<IActionResult> CompleteTest(int id, TestTrainee testTrainee)
+        {
+            var existingTestTrainee = await _context.TestTrainees.FindAsync(id);
+            if (existingTestTrainee == null)
+            {
+                return NotFound();
+            }
+
+            existingTestTrainee.Status = "Completed";
+            existingTestTrainee.Score = testTrainee.Score;
+            existingTestTrainee.Percentage = testTrainee.Percentage;
+            existingTestTrainee.Completed = true;
+            _context.Entry(existingTestTrainee).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TestTraineeExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // Get the trainee's email
+            var trainee = await _context.Users.FindAsync(existingTestTrainee.TraineeId);
+            if (trainee == null)
+            {
+                return BadRequest("Trainee not found.");
+            }
+
+            // Prepare the email message
+            string subject = "Test Results";
+            string message = $"Your test score is {existingTestTrainee.Score} ({existingTestTrainee.Percentage}%).";
+
+            // Send the email with test results
+            await _emailService.SendTestResultsEmail(trainee.Email, subject, message);
+
+            return NoContent();
+        }
+
+        private bool TestTraineeExists(int id)
+        {
+            return _context.TestTrainees.Any(e => e.TestTraineeId == id);
+        }
+    }
+}
+```
+
+### Step 5: Configure Dependency Injection for EmailService
+
+1. **Register EmailService in Startup.cs**:
+   - Open `Startup.cs` and register the `EmailService` with the API key:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+    services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+    // Register EmailService with the API key
+    services.AddSingleton(new EmailService("YOUR_API_KEY")); // Replace with your MailerSend API key
+
+    services.AddControllers();
+    services.AddSwaggerGen();
+}
+```
+
+### Step 6: Test the Application
+
+1. **Run the application** and ensure that the API is working.
+2. **Complete a test** using the API, and check the trainee's email for the test results.
+
+### Conclusion
+
+By following these steps, you can send test results to trainees' emails using MailerSend in your ASP.NET Core Web API. The implementation includes creating an email service, modifying the test completion logic to send emails, and configuring dependency injection for the email service. Make sure to handle any errors that may occur during the email sending process. If you have any further questions or need assistance, feel free to ask!
+
