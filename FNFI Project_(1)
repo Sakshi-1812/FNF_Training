@@ -22,46 +22,92 @@ Here’s a simple example using C# to generate a hyperlink for a question paper:
 using System;
 using System.IO;
 
-public class QuestionPaperGenerator
+namespace FnfProjectApp
 {
-    public string GenerateQuestionPaper(string[] questions, TimeSpan validDuration)
+    public class QuestionPaperMain
     {
-        // Create HTML content for the question paper
-        string htmlContent = "<html><body><h1>Question Paper</h1><ol>";
-        foreach (var question in questions)
+        public static void Main(string[] args)
         {
-            htmlContent += $"<li>{question}</li>";
+            // Example  usage
+            HyperLinkGenerator();
         }
-        htmlContent += "</ol></body></html>";
 
-        // Save the HTML to a file
-        string fileName = $"QuestionPaper_{Guid.NewGuid()}.html";
-        File.WriteAllText(fileName, htmlContent);
-
-        // Generate a unique URL (for demonstration, using a local path)
-        string uniqueUrl = $"http://yourserver.com/{fileName}";
-
-        // Set expiration time (for example, 1 hour from now)
-        DateTime expirationTime = DateTime.Now.Add(validDuration);
-        
-        // Store expiration logic (this would typically involve a database)
-        StoreLinkExpiration(uniqueUrl, expirationTime);
-
-        return uniqueUrl;
+        private static void HyperLinkGenerator()
+        {
+            var generator = new QuestionPaperGenerator();
+            string[] questions = { "What is the capital of France?", "What is 2 + 2?" };
+            string link = generator.GenerateQuestionPaper(questions, TimeSpan.FromHours(1));
+            Console.WriteLine("Access your question paper at: " + link);
+        }
     }
+    
 
-    private void StoreLinkExpiration(string url, DateTime expirationTime)
+    public class QuestionPaperGenerator
     {
-        // Logic to store the URL and its expiration time in a database or cache
-        Console.WriteLine($"Stored URL: {url} with expiration time: {expirationTime}");
-    }
-}
+        public string GenerateQuestionPaper(string[] questions, TimeSpan validDuration)
+        {
+            // Create HTML content for the question paper with a countdown timer
+            string expirationTime = DateTime.Now.Add(validDuration).ToString("yyyy-MM-ddTHH:mm:ss");
+            string htmlContent = $@"
+        <html>
+        <head>
+            <title>Question Paper</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                #timer {{ position: absolute; top: 10px; right: 10px; font-size: 20px; color: red; }}
+            </style>
+            <script>
+                var countdownDate = new Date('{expirationTime}').getTime();
+                var x = setInterval(function() {{
+                    var now = new Date().getTime();
+                    var distance = countdownDate - now;
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    document.getElementById('timer').innerHTML = hours + 'h ' + minutes + 'm ' + seconds + 's ';
+                    if (distance < 0) {{
+                        clearInterval(x);
+                        document.getElementById('timer').innerHTML = 'EXPIRED';
+                    }}
+                }}, 1000);
+            </script>
+        </head>
+        <body>
+            <h1>Welcome to my generated hyperlink</h1>
+            <div id='timer'></div>
+            <ol>";
+            foreach (var question in questions)
+            {
+                htmlContent += $"<li>{question}</li>";
+            }
+            htmlContent += "</ol></body></html>";
 
-// Example usage
-var generator = new QuestionPaperGenerator();
-string[] questions = { "What is the capital of France?", "What is 2 + 2?" };
-string link = generator.GenerateQuestionPaper(questions, TimeSpan.FromHours(1));
-Console.WriteLine("Access your question paper at: " + link);
+            // Save the HTML to a file
+            string fileName = $"QuestionPaper_{Guid.NewGuid()}.html";
+            File.WriteAllText(fileName, htmlContent);
+
+            // Generate a unique URL (for demonstration, using a local path)
+            string uniqueUrl = $"http://yourserver.com/{fileName}";
+
+            // Set expiration time (for example, 1 hour from now)
+            DateTime expirationTimeDate = DateTime.Now.Add(validDuration);
+
+            // Store expiration logic (this would typically involve a database)
+
+
+            StoreLinkExpiration(uniqueUrl, expirationTimeDate);
+
+            return uniqueUrl;
+        }
+
+        private void StoreLinkExpiration(string url, DateTime expirationTime)
+        {
+            // Logic to store the URL and its expiration time in a database or cache
+            Console.WriteLine($"Stored URL: {url} with expiration time: {expirationTime}");
+        }
+    }
+    
+}
 ```
 
 ### Explanation of the Code
@@ -73,10 +119,3 @@ Console.WriteLine("Access your question paper at: " + link);
 - **Output**: Finally, the generated link is printed for access. 
 
 This process ensures that each question paper is easily accessible for a limited time, enhancing the security and integrity of the assessment process.
-
-Citations:
-[1] https://www.questionbanksoftware.co.in
-[2] https://docs.moodle.org/404/en/Question_bank
-[3] https://www.linkedin.com/pulse/use-technology-making-question-bank-yoctel-solutions-pvt-ltd
-[4] https://www.eklavvya.com/blog/ai-question-paper-generator/
-[5] https://www.speedwellsoftware.com/exam-software/question-bank-software/
